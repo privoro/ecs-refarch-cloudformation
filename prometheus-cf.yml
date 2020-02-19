@@ -372,12 +372,12 @@ Outputs:
   AWSRegion:
     Description: The name of the region where the stack was launched
     Value: !Ref 'AWS::Region'
-  AvailabilityZone:
-    Description: The AZ where the instances are deployed
-    Value: 
-      !GetAtt
-      - Subnet1
-      - AvailabilityZone
+  # AvailabilityZone:
+  #   Description: The AZ where the instances are deployed
+  #   Value: 
+  #     !GetAtt
+  #     - Subnet1
+  #     - AvailabilityZone
   NLBFullyQualifiedName:
     Description: The fully qualified name of the NLB
     Value: !GetAtt 
