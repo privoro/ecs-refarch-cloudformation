@@ -32,6 +32,10 @@ Parameters:
     Description: id of existing subnet in VPC (e.g. Development_PublicSubnet1)
     Type: String
     Default: subnet-0b80bb6c
+  StackAZ:
+    Description: AvailabilityZone of the stack's given subnet
+    Type: String
+    Default: us-west-2a
   CIDRVPC:
     Description: Enter the CIDR Range for your VPC
     Type: String
@@ -152,7 +156,7 @@ Resources:
   ECSCluster:
     Type: 'AWS::ECS::Cluster'
     Properties:
-      ClusterName: rexray-demo
+      ClusterName: !Join [ '-', [!Ref 'AWS::StackName', 'rexray-demo'] ]
   ECSAutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
@@ -372,12 +376,9 @@ Outputs:
   AWSRegion:
     Description: The name of the region where the stack was launched
     Value: !Ref 'AWS::Region'
-  # AvailabilityZone:
-  #   Description: The AZ where the instances are deployed
-  #   Value: 
-  #     !GetAtt
-  #     - Subnet1
-  #     - AvailabilityZone
+  AvailabilityZone:
+    Description: The AZ where the instances are deployed
+    Value: !Ref StackAZ
   NLBFullyQualifiedName:
     Description: The fully qualified name of the NLB
     Value: !GetAtt 
