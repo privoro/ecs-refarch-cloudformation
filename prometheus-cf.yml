@@ -127,8 +127,8 @@ Resources:
           ToPort: '22'
           CidrIp: !Ref SSHLocation
         - IpProtocol: tcp
-          FromPort: '3306'
-          ToPort: '3306'
+          FromPort: '9090'
+          ToPort: '9090'
           CidrIp: !Ref SSHLocation
   NetworkLoadBalancer:
     Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
@@ -144,12 +144,12 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref MySQLTargetGroup
       LoadBalancerArn: !Ref NetworkLoadBalancer
-      Port: 3306
+      Port: 9090
       Protocol: TCP
   MySQLTargetGroup:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
-      Port: 3306
+      Port: 9090
       Protocol: TCP
       TargetType: ip
       VpcId: !Ref VPC
@@ -401,6 +401,6 @@ Outputs:
   SecurityGroupId:
     Description: The ID of security group that the instances are members of
     Value: !Ref InstanceSecurityGroup
-  MySQLTargetGroupArn:
+  PrometheusTargetGroupArn:
     Description: The Arn of the MySQL target group
     Value: !Ref MySQLTargetGroup

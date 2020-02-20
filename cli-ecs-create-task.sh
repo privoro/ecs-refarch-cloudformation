@@ -20,7 +20,7 @@ cat > prom-task-def.json <<EOF
           },
           "portMappings": [
               {
-                  "containerPort": 3306,
+                  "containerPort": 9090,
                   "protocol": "tcp"
               }
           ],
@@ -32,13 +32,13 @@ cat > prom-task-def.json <<EOF
           ],
           "mountPoints": [
               {
-                  "containerPath": "/var/lib/mysql",
+                  "containerPath": "/var/lib/prometheus",
                   "sourceVolume": "rexray-vol"
               }
           ],
-          "image": "mysql",
+          "image": "492058901556.dkr.ecr.us-west-2.amazonaws.com/prometheus:latest",
           "essential": true,
-          "name": "mysql"
+          "name": "prometheus-container"
       }
   ],
   "placementConstraints": [
@@ -48,7 +48,7 @@ cat > prom-task-def.json <<EOF
       }
   ],
   "memory": "512",
-  "family": "mysql",
+  "family": "prometheus",
   "networkMode": "awsvpc",
   "requiresCompatibilities": [
       "EC2"
@@ -80,6 +80,10 @@ TaskDefinitionArn=$(aws ecs register-task-definition \
 --cli-input-json 'file://prom-task-def.json' \
 | jq -r .taskDefinition.taskDefinitionArn)
 
+set +ex
 echo "task creation done"
 echo "ARN: ${TaskDefinitionArn}"
 export TaskDefinitionArn=${TaskDefinitionArn}
+
+# temp file - annoying in search, git etc. so remove
+rm -f prom-task-def.json

@@ -11,7 +11,7 @@
           },
           "portMappings": [
               {
-                  "containerPort": 3306,
+                  "containerPort": 9090,
                   "protocol": "tcp"
               }
           ],

@@ -423,6 +423,6 @@ Outputs:
   SecurityGroupId:
     Description: The ID of security group that the instances are members of
     Value: !Ref InstanceSecurityGroup
-  MySQLTargetGroupArn:
+  PrometheusTargetGroupArn:
     Description: The Arn of the MySQL target group
     Value: !Ref MySQLTargetGroup

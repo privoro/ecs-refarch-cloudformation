@@ -6,13 +6,13 @@ TaskDefinitionArn=$1
 cat > prom-svc-def.json << EOF 
 {
     "cluster": "${ECSClusterName}",
-    "serviceName": "mysql-svc",
+    "serviceName": "prometheus-svc",
     "taskDefinition": "${TaskDefinitionArn}",
     "loadBalancers": [
         {
-            "targetGroupArn": "${MySQLTargetGroupArn}",
-            "containerName": "mysql",
-            "containerPort": 3306
+            "targetGroupArn": "${PrometheusTargetGroupArn}",
+            "containerName": "prometheus-container",
+            "containerPort": 9090
         }
     ],
     "desiredCount": 1,
@@ -46,3 +46,6 @@ echo "service created"
 echo $SvcDefinitionArn
 
 printf "try to access service thru elb at:\n${NLBFullyQualifiedName}\n"
+
+# temp file - annoying in search, git etc. so remove
+rm -f prom-svc-def.json
