@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 
+TaskDefinitionArn=$1
+
 cat > prom-svc-def.json << EOF 
 {
     "cluster": "${ECSClusterName}",
@@ -42,3 +44,5 @@ SvcDefinitionArn=$(aws ecs create-service \
 
 echo "service created"
 echo $SvcDefinitionArn
+
+printf "try to access service thru elb at:\n${NLBFullyQualifiedName}\n"

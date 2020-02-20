@@ -85,11 +85,11 @@ Resources:
   #         Value: !Ref 'AWS::StackName'
   #       - Key: Network
   #         Value: Public
-  GatewayToInternet:
-    Type: 'AWS::EC2::VPCGatewayAttachment'
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
+  # GatewayToInternet:
+  #   Type: 'AWS::EC2::VPCGatewayAttachment'
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     InternetGatewayId: !Ref InternetGateway
   PublicRouteTable:
     # DependsOn:
     #   - VPC

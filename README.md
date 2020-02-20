@@ -42,21 +42,20 @@ to run the template in CF, use:
 - CREATE TASK DEFINITION
   - with stack created we have a cluster and all associated parts, we need a task to run our container executable
   - create with `cli-ecs-create-task.sh`
+  - note the ARN given back to you indicating success. it will be used to create the service
 
 - CREATE SERVICE
   - service will take task definition from environment and run it
-  - create with `cli-ecs-create-service.sh`
+  - create with `cli-ecs-create-service.sh task_definition_arn_you_provide`
+  - should point to NLB/ELB hostname to try to access service
 
 - TEST SERVICE VIA ELB DNS HOSTNAME
   - The template in question incorporates an ELB as a resource. This gives a public IP by which container resources can be accessed from public internet. To find the public DNS:
-
-  - Look at Cloudformation stack output in AWS web console - find ID given in Outputs > NLB Name.
-
-  - Find this ID in EC2 console > left side, Load Balancers > find the NLB name in center list, click the list item.
-
-  - Now you can see the public DNS in the summary below. This is the external interface to your container (for testing your web service/resource, usually). Example:
-
+  - see end of `cli-ecs-create-service.sh` output OR
+  - in your terminal environment with sourced cloudformation, use `echo $NLBFullyQualifiedName`
+  - Example:
     - prom-Netwo-RO2P5C0DHTAV-b8497dd510d8e9af.elb.us-west-2.amazonaws.com
+  - Depending on service you're testing, open this in browser, or connect with your other tools to get at endpoints/portals.
 
 - TEST DRAINING SERVICE WITH PERSISTENT STORAGE
   - draining simulates the container being moved to another cluster ec2 container host

@@ -10,6 +10,7 @@ SSH_KEYPAIR_ID=development-ssh-keypair-pem
 SUBNET_ID=subnet-0b80bb6c
 VPC_ID=vpc-837997e5
 
+# just pick the first AZ of the region and work with that for now
 # need jq installed on system path, but then we can parse out data we want easily, strip quotes w. sed
 AVAILZONE=$(aws ec2 describe-subnets --filters "Name=subnet-id,Values=${SUBNET_ID}" | jq '.Subnets[0].AvailabilityZone' | sed -e 's/^"//' -e 's/"$//')
 
