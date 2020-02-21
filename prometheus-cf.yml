@@ -111,7 +111,7 @@ Resources:
       LoadBalancerArn: !Ref NetworkLoadBalancer
       Port: 9090
       Protocol: TCP
-    PrometheusTargetGroup:
+  PrometheusTargetGroup:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
       Port: 9090
