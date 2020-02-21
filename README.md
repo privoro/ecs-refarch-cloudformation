@@ -15,27 +15,20 @@ to run the template in CF, use:
 - CREATE STACK
   - run the cloudformation template as shown in `./dev.sh` . this is just a demonstration of how to use the stack creation
   - after a successful stack creation do this
-    - `./get-outputs.sh your_stack_name && source <(./get-outputs.sh your_stack_name)`
+    - `StackName=your_stack_name`
+    - `./get-outputs.sh $StackName && source <(./get-outputs.sh $StackName)`
     - substitute the name of the stack you created. this sets up environment variables which let you easily create ecs tasks etc with templates and aws cli
     - you should see your environment has been added the following exports
 
   ```
   export PrometheusTargetGroupArn=arn:aws:elasticloadbalancing:us-west-2:492058901556:targetgroup/prom-Prometheus-50D536PLVTMF/0c772f2ceda2b302
-  
   export NLBName=prom-Netwo-RO2P5C0DHTAV
-  
   export ECSClusterName=prom-test-Wed-02-19-1243-rexray-demo
-  
   export SecurityGroupId=sg-03dd95faf1748109f
-  
   export NLBFullyQualifiedName=prom-Netwo-RO2P5C0DHTAV-b8497dd510d8e9af.elb.us-west-2.amazonaws.com
-  
   export AWSRegion=us-west-2
-  
   export AvailabilityZone=us-west-2a
-  
   export CWLogGroupName=prom-test-Wed-02-19-1243-CWLogsGroup-1AK8E3A6KULPU
-  
   export SubnetId=subnet-0b80bb6c
   ```
 

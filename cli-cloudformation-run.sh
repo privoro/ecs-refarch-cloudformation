@@ -23,3 +23,7 @@ ParameterKey=StackAZ,ParameterValue=${AVAILZONE} \
 --capabilities CAPABILITY_NAMED_IAM
 
 #--disable-rollback
+
+echo "StackName=$1"
+echo "next step..."
+printf "./get-outputs.sh $CF_STACK_NAME && source <(./get-outputs.sh $CF_STACK_NAME)\n"

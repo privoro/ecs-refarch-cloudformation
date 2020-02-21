@@ -36,7 +36,7 @@ cat > prom-task-def.json <<EOF
                   "sourceVolume": "rexray-vol"
               }
           ],
-          "image": "492058901556.dkr.ecr.us-west-2.amazonaws.com/prometheus:latest",
+          "image": "492058901556.dkr.ecr.us-west-2.amazonaws.com/prometheus:2.0",
           "essential": true,
           "name": "prometheus-container"
       }
@@ -82,8 +82,8 @@ TaskDefinitionArn=$(aws ecs register-task-definition \
 
 set +ex
 echo "task creation done"
-echo "ARN: ${TaskDefinitionArn}"
-export TaskDefinitionArn=${TaskDefinitionArn}
+echo "ARN:"
+echo ${TaskDefinitionArn}
 
 # temp file - annoying in search, git etc. so remove
 rm -f prom-task-def.json
