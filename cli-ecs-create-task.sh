@@ -26,7 +26,7 @@ cat > prom-task-def.json <<EOF
           ],
           "environment": [
               {
-                  "name": "MYSQL_ROOT_PASSWORD",
+                  "name": "EXAMPLE_ENVIRONMENT_VAR",
                   "value": "privoro"
               }
           ],

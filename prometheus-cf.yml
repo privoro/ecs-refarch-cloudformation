@@ -142,11 +142,11 @@ Resources:
     Properties:
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref MySQLTargetGroup
+          TargetGroupArn: !Ref PrometheusTargetGroup
       LoadBalancerArn: !Ref NetworkLoadBalancer
       Port: 9090
       Protocol: TCP
-  MySQLTargetGroup:
+    PrometheusTargetGroup:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
       Port: 9090
@@ -402,5 +402,5 @@ Outputs:
     Description: The ID of security group that the instances are members of
     Value: !Ref InstanceSecurityGroup
   PrometheusTargetGroupArn:
-    Description: The Arn of the MySQL target group
-    Value: !Ref MySQLTargetGroup
+    Description: The Arn of the Prometheus target group
+    Value: !Ref PrometheusTargetGroup

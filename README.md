@@ -20,7 +20,7 @@ to run the template in CF, use:
     - you should see your environment has been added the following exports
 
   ```
-  export PrometheusTargetGroupArn=arn:aws:elasticloadbalancing:us-west-2:492058901556:targetgroup/prom-MySQL-50D536PLVTMF/0c772f2ceda2b302
+  export PrometheusTargetGroupArn=arn:aws:elasticloadbalancing:us-west-2:492058901556:targetgroup/prom-Prometheus-50D536PLVTMF/0c772f2ceda2b302
   
   export NLBName=prom-Netwo-RO2P5C0DHTAV
   
