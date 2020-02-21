@@ -156,7 +156,7 @@ Resources:
   ECSCluster:
     Type: 'AWS::ECS::Cluster'
     Properties:
-      ClusterName: !Join [ '-', [!Ref 'AWS::StackName', 'rexray-demo'] ]
+      ClusterName: !Join [ '-', [!Ref 'AWS::StackName', 'prometheus-demo'] ]
   ECSAutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
