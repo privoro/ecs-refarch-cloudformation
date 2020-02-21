@@ -57,42 +57,7 @@ Parameters:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
 Resources:
-  # Dev VPC is vpc-837997e5
-  # VPC:
-  #   Type: 'AWS::EC2::VPC'
-  #   Properties:
-  #     CidrBlock: !Ref CIDRVPC
-  #     EnableDnsSupport: true
-  #     EnableDnsHostnames: true
-  #     Tags:
-  #       - Key: Name
-  #         Value: Volume-Driver VPC
-  # Subnet1:
-  #   Type: 'AWS::EC2::Subnet'
-  #   Properties:
-  #     VpcId: !Ref VPC
-  #     MapPublicIpOnLaunch: true
-  #     CidrBlock: !Ref CIDRSubnet1
-  #     AvailabilityZone: !Select 
-  #       - '0'
-  #       - !GetAZs 
-  #         Ref: 'AWS::Region'
-  # InternetGateway:
-  #   Type: 'AWS::EC2::InternetGateway'
-  #   Properties:
-  #     Tags:
-  #       - Key: Application
-  #         Value: !Ref 'AWS::StackName'
-  #       - Key: Network
-  #         Value: Public
-  # GatewayToInternet:
-  #   Type: 'AWS::EC2::VPCGatewayAttachment'
-  #   Properties:
-  #     VpcId: !Ref VPC
-  #     InternetGatewayId: !Ref InternetGateway
   PublicRouteTable:
-    # DependsOn:
-    #   - VPC
     Type: 'AWS::EC2::RouteTable'
     Properties:
       VpcId: !Ref VPC
@@ -404,3 +369,39 @@ Outputs:
   PrometheusTargetGroupArn:
     Description: The Arn of the Prometheus target group
     Value: !Ref PrometheusTargetGroup
+
+## NOTE - we have an existing VPC to use atm,
+## if we decide we want the stack to create its own VPC scheme, see below
+
+  # VPC:
+  #   Type: 'AWS::EC2::VPC'
+  #   Properties:
+  #     CidrBlock: !Ref CIDRVPC
+  #     EnableDnsSupport: true
+  #     EnableDnsHostnames: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: Volume-Driver VPC
+  # Subnet1:
+  #   Type: 'AWS::EC2::Subnet'
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     MapPublicIpOnLaunch: true
+  #     CidrBlock: !Ref CIDRSubnet1
+  #     AvailabilityZone: !Select 
+  #       - '0'
+  #       - !GetAZs 
+  #         Ref: 'AWS::Region'
+  # InternetGateway:
+  #   Type: 'AWS::EC2::InternetGateway'
+  #   Properties:
+  #     Tags:
+  #       - Key: Application
+  #         Value: !Ref 'AWS::StackName'
+  #       - Key: Network
+  #         Value: Public
+  # GatewayToInternet:
+  #   Type: 'AWS::EC2::VPCGatewayAttachment'
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     InternetGatewayId: !Ref InternetGateway
