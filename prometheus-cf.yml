@@ -1,5 +1,13 @@
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
+  ImageName:
+    Description: Docker container image to launch, including repository
+    Type: String
+    Default: 492058901556.dkr.ecr.us-west-2.amazonaws.com/prometheus:latest
+  EBSVolumeSizeGiB:
+    Description: Persistent storage amount in GiB for EBS (Rexray driver) volume
+    Type: Number
+    Default: 10
   KeyName:
     Type: 'AWS::EC2::KeyPair::KeyName'
     Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances
@@ -8,7 +16,7 @@ Parameters:
     Default: '2'
     Description: Number of instances to launch in your ECS cluster
   InstanceType:
-    Description: The EC2 instance type
+    Description: The EC2 instance type that hosts containers
     Type: String
     Default: t2.medium
     ConstraintDescription: must be a valid EC2 instance type.
@@ -36,26 +44,23 @@ Parameters:
     Description: AvailabilityZone of the stack's given subnet
     Type: String
     Default: us-west-2a
-  CIDRVPC:
-    Description: Enter the CIDR Range for your VPC
-    Type: String
-    MinLength: '9'
-    MaxLength: '18'
-    Default: 192.168.0.0/16
-    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
-  CIDRSubnet1:
-    Description: Enter the CIDR Range for your VPC
-    Type: String
-    MinLength: '9'
-    MaxLength: '18'
-    Default: 192.168.1.0/24
-    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   ECSAMI:
-    Description: AMI ID
+    Description: AMI ID for EC2 container host
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+  ContainerCpu:
+    Description: How much CPU to give to the container. 1024 is 1 CPU
+    Default: 512
+    Type: Number
+  ContainerMemoryReservation:
+    Description: Memory allocation for the container. Tasks that exceed their allocation are restarted.
+    Default: 1024
+    AllowedValues:
+      - 1024
+      - 2048
+      - 3072
+      - 4096
+    Type: Number
 Resources:
   PublicRouteTable:
     Type: 'AWS::EC2::RouteTable'
@@ -122,6 +127,75 @@ Resources:
     Type: 'AWS::ECS::Cluster'
     Properties:
       ClusterName: !Join [ '-', [!Ref 'AWS::StackName', 'prometheus-demo'] ]
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ExecutionRoleArn: !GetAtt 'ECSTaskExecutionRole.Arn'
+      Cpu: !Ref 'ContainerCpu'
+      Memory: !Ref 'ContainerMemoryReservation'
+      NetworkMode: awsvpc
+      RequiresCompatibilities: 
+        - EC2
+      Family: !Sub '${AWS::StackName}'
+      PlacementConstraints:
+        - Type: memberOf
+          Expression: !Join ['', ['attribute:ecs.availability-zone==', !Ref StackAZ ] ]
+      ContainerDefinitions:
+        - Name: prometheus-container
+          Image: !Ref 'ImageName'
+          Essential: true
+          ReadonlyRootFilesystem: false
+          Cpu: !Ref 'ContainerCpu'
+          Memory: !Ref 'ContainerMemoryReservation'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref CWLogsGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          PortMappings:
+            - ContainerPort: 9090
+              Protocol: tcp
+          MountPoints:
+            - ContainerPath: /var/lib/prometheus
+              SourceVolume: rexray-vol
+      Volumes:
+        - Name: rexray-vol
+          DockerVolumeConfiguration:
+            Autoprovision: true
+            Scope: shared
+            Driver: rexray/ebs
+            DriverOpts:
+              VolumeType: gp2
+              Size: !Ref EBSVolumeSizeGiB
+  # Service:
+  #   Type: AWS::ECS::Service
+  #   DependsOn:
+  #     - NLBListener
+  #     - PrometheusTargetGroup
+  #     - TaskDefinition
+  #   Properties:
+  #     Cluster: !Ref 'ECSCluster'
+  #     LaunchType: EC2
+  #     DeploymentConfiguration:
+  #       MaximumPercent: 200
+  #       MinimumHealthyPercent: 50
+  #     DesiredCount: !Ref 'TaskCount'
+  #     HealthCheckGracePeriodSeconds: 120
+  #     NetworkConfiguration:
+  #       AwsvpcConfiguration:
+  #         AssignPublicIp: ENABLED
+  #         Subnets:
+  #           - !Ref 'AppPublicSubnetAZ1'
+  #           - !Ref 'AppPublicSubnetAZ2'
+  #         SecurityGroups:
+  #           - !Ref 'PublicSecurityGroup'
+  #     LoadBalancers:
+  #       - ContainerName: proxyapp
+  #         ContainerPort: 9443
+  #         TargetGroupArn: !Ref 'PrometheusTargetGroup'
+  #     TaskDefinition: !Ref 'TaskDefinition'
+
   ECSAutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
@@ -329,6 +403,31 @@ Resources:
                 - 'ecs:DescribeServices'
                 - 'ecs:UpdateService'
               Resource: '*'
+  ECSTaskExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
   EC2InstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
@@ -405,3 +504,19 @@ Outputs:
   #   Properties:
   #     VpcId: !Ref VPC
   #     InternetGatewayId: !Ref InternetGateway
+  # CIDRVPC:
+  #   Description: Enter the CIDR Range for your VPC
+  #   Type: String
+  #   MinLength: '9'
+  #   MaxLength: '18'
+  #   Default: 192.168.0.0/16
+  #   AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+  #   ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  # CIDRSubnet1:
+  #   Description: Enter the CIDR Range for your VPC
+  #   Type: String
+  #   MinLength: '9'
+  #   MaxLength: '18'
+  #   Default: 192.168.1.0/24
+  #   AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+  #   ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.

@@ -6,7 +6,7 @@ set -ex
 # --availability-zone $AvailabilityZone \
 # --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=rexray-vol}]'
 
-cat > prom-task-def.json <<EOF 
+cat > prom-task-def.json <<EOF
 {
   "containerDefinitions": [
       {
