@@ -9,12 +9,16 @@ Parameters:
     Type: Number
     Default: 10
   KeyName:
-    Type: 'AWS::EC2::KeyPair::KeyName'
     Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances
-  DesiredCapacity:
-    Type: Number
-    Default: '2'
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  TaskCount:
     Description: Number of instances to launch in your ECS cluster
+    Type: Number
+    Default: 1
+  ECSEC2InstanceCount:
+    Description: Number of EC2 container hosts that ECS should allocate
+    Type: Number
+    Default: 2
   InstanceType:
     Description: The EC2 instance type that hosts containers
     Type: String
@@ -123,10 +127,13 @@ Resources:
       Protocol: TCP
       TargetType: ip
       VpcId: !Ref VPC
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '30'
   ECSCluster:
     Type: 'AWS::ECS::Cluster'
     Properties:
-      ClusterName: !Join [ '-', [!Ref 'AWS::StackName', 'prometheus-demo'] ]
+      ClusterName: !Join [ '-', [!Ref 'AWS::StackName', 'prometheus-cluster'] ]
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -157,10 +164,10 @@ Resources:
             - ContainerPort: 9090
               Protocol: tcp
           MountPoints:
-            - ContainerPath: /var/lib/prometheus
-              SourceVolume: rexray-vol
+            - ContainerPath: /prometheus
+              SourceVolume: !Join [ '-', [!Ref 'AWS::StackName', 'prom-storage-volume'] ]
       Volumes:
-        - Name: rexray-vol
+        - Name: !Join [ '-', [!Ref 'AWS::StackName', 'prom-storage-volume'] ]
           DockerVolumeConfiguration:
             Autoprovision: true
             Scope: shared
@@ -168,33 +175,32 @@ Resources:
             DriverOpts:
               VolumeType: gp2
               Size: !Ref EBSVolumeSizeGiB
-  # Service:
-  #   Type: AWS::ECS::Service
-  #   DependsOn:
-  #     - NLBListener
-  #     - PrometheusTargetGroup
-  #     - TaskDefinition
-  #   Properties:
-  #     Cluster: !Ref 'ECSCluster'
-  #     LaunchType: EC2
-  #     DeploymentConfiguration:
-  #       MaximumPercent: 200
-  #       MinimumHealthyPercent: 50
-  #     DesiredCount: !Ref 'TaskCount'
-  #     HealthCheckGracePeriodSeconds: 120
-  #     NetworkConfiguration:
-  #       AwsvpcConfiguration:
-  #         AssignPublicIp: ENABLED
-  #         Subnets:
-  #           - !Ref 'AppPublicSubnetAZ1'
-  #           - !Ref 'AppPublicSubnetAZ2'
-  #         SecurityGroups:
-  #           - !Ref 'PublicSecurityGroup'
-  #     LoadBalancers:
-  #       - ContainerName: proxyapp
-  #         ContainerPort: 9443
-  #         TargetGroupArn: !Ref 'PrometheusTargetGroup'
-  #     TaskDefinition: !Ref 'TaskDefinition'
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - NLBListener
+      - PrometheusTargetGroup
+      - TaskDefinition
+    Properties:
+      Cluster: !Ref 'ECSCluster'
+      LaunchType: EC2
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      DesiredCount: !Ref 'TaskCount'
+      HealthCheckGracePeriodSeconds: 120
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref 'Subnet1'
+          SecurityGroups:
+            - !Ref 'InstanceSecurityGroup'
+      LoadBalancers:
+        - ContainerName: prometheus-container
+          ContainerPort: 9090
+          TargetGroupArn: !Ref 'PrometheusTargetGroup'
+      TaskDefinition: !Ref 'TaskDefinition'
 
   ECSAutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
@@ -207,9 +213,9 @@ Resources:
       VPCZoneIdentifier:
         - !Ref Subnet1
       LaunchConfigurationName: !Ref ContainerInstances
-      MinSize: '2'
-      MaxSize: '2'
-      DesiredCapacity: '2'
+      MinSize: !Ref 'ECSEC2InstanceCount'
+      MaxSize: !Ref 'ECSEC2InstanceCount'
+      DesiredCapacity: !Ref 'ECSEC2InstanceCount'
       Tags:
         - Key: Name
           Value: ECS host
@@ -243,7 +249,10 @@ Resources:
         'Fn::Sub': >
           #!/bin/bash
 
+
           yum install -y aws-cfn-bootstrap
+
+          set -x
 
           /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack
           ${AWS::StackName} --resource ContainerInstances
@@ -253,8 +262,6 @@ Resources:
 
 
           exec 2>>/var/log/ecs/ecs-agent-install.log
-
-          set -x
 
           until curl -s http://localhost:51678/v1/metadata
 
