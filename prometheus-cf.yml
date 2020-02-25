@@ -12,13 +12,13 @@ Parameters:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances
     Type: 'AWS::EC2::KeyPair::KeyName'
   TaskCount:
-    Description: Number of instances to launch in your ECS cluster
+    Description: Number of instances of task to launch in your ECS cluster
     Type: Number
     Default: 1
   ECSEC2InstanceCount:
     Description: Number of EC2 container hosts that ECS should allocate
     Type: Number
-    Default: 2
+    Default: 4
   InstanceType:
     Description: The EC2 instance type that hosts containers
     Type: String
